@@ -39,4 +39,5 @@ module.exports = class Ftp
 			when 220 then @raw("USER", @username)
 			when 331 then @raw("PASS", @password)
 			when 230 then @client.emit('authenticated')
+			when 530 then @client.emit('error', new Error("Invalid Login"))
   
