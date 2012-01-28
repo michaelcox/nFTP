@@ -1,37 +1,16 @@
 Ftp = require('../ftp')
+ftpservers = require('./ftpservers')
 should = require('should')
 net = require('net')
-server = {}
+ftpServer = {}
 
 describe 'ftp.connect', ->
 
-	before ->
-		server = net.createServer()
-		server.listen(20021)
-		
-		server.on 'connection', (socket) ->
-			socket.write('220-Microsoft FTP Service')
-			socket.write('220 Example.com FTP')
-			socket.on 'data', (data) ->
-				dataSent = data.toString()
-				#console.log dataSent
-				[cmd, args...] = dataSent.split(" ")
-
-				switch cmd
-					when "USER"
-						@user = args[0]
-						socket.write("331 Password required for #{args[0]}.")
-					when "PASS"
-						@pass = args[0]
-						if @user is 'jsmith' and @pass is 'mypass'
-							socket.write("230-Welcome")
-							socket.write("230 User logged in.")
-						else
-							socket.write("530 Login incorrect. You sent: " + @user + " " + @pass)
-					when "SYST" then socket.write("215 Windows_NT")
-
-	after ->
-		server.close()
+	before =>
+		ftpServer = new ftpservers.MicrosoftFtpServer()
+		ftpServer.open()
+	after =>
+		ftpServer.close()
 
 	it 'should automatically authenticate upon successful connection', (done) ->
 		ftp = new Ftp({port: 20021, username: "jsmith", password: "mypass"})

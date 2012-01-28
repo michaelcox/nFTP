@@ -36,12 +36,14 @@ module.exports = class Ftp
 			@processResponse(data)
 
 		passToCallback = (err) =>
+			# Remove all the listeners that were created for the "connect" function
 			@client.removeAllListeners('user')
 			@client.removeAllListeners('pass')
 			@client.removeAllListeners('os')
 			@client.removeAllListeners('authenticated')
 			@client.removeAllListeners('invalidLogin')
 			@client.removeAllListeners('error')
+
 			callback(err)
 
 	raw: (command, arg1, arg2, arg3) ->
