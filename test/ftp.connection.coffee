@@ -28,6 +28,7 @@ describe 'ftp.connect', ->
 							socket.write("230 User logged in.")
 						else
 							socket.write("530 Login incorrect. You sent: " + @user + " " + @pass)
+					when "SYST" then socket.write("215 Windows_NT")
 
 	after ->
 		server.close()
@@ -52,6 +53,13 @@ describe 'ftp.connect', ->
 			err.should.be.instanceof Error
 			ftp.authenticated.should.be.false
 			err.message.should.equal "Invalid Login"
+			done()
+
+	it 'should detect system OS upon successful connection', (done) ->
+		ftp = new Ftp({port: 20021, username: "jsmith", password: "mypass"})
+		ftp.connect (err) ->
+			should.not.exist(err)
+			ftp.os.should.equal "Windows_NT"
 			done()
 
 
