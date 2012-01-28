@@ -1,6 +1,6 @@
 {
-  "name": "ftp",
-  "description": "Another FTP Framework",
+  "name": "nftp",
+  "description": "nFTP FTP Client",
   "version": "0.0.1",
   "author": "Michael Cox <cox.michael@gmail.com>",
   "devDependencies": {
