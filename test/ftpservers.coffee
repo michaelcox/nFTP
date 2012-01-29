@@ -24,6 +24,7 @@ exports.MicrosoftFtpServer = class FtpServer
 					when "SYST" then self.syst()
 					when "FEAT" then self.feat()
 					when "OPTS" then self.opts(args)
+					when "QUIT" then self.quit()
 
 	close: ->
 		@server.close()

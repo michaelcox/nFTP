@@ -90,6 +90,11 @@ module.exports = class Ftp
 
 			callback(err)
 
+	disconnect: (callback) ->
+		@raw("QUIT")
+		@client.end()
+		callback()
+
 	raw: (command, args...) ->
 		args = args.join(" ")
 		@lastCmd = command
