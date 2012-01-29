@@ -22,6 +22,7 @@ exports.MicrosoftFtpServer = class FtpServer
 					when "USER" then self.user(args[0])
 					when "PASS" then self.pass(args[0])
 					when "SYST" then self.syst()
+					when "FEAT" then self.feat()
 
 	close: ->
 		@server.close()
@@ -38,6 +39,9 @@ exports.MicrosoftFtpServer = class FtpServer
 
 	syst: ->
 		@socket.write("215 Windows_NT")
+
+	feat: ->
+		@socket.write("211-Extended features supported:\r\n LANG EN*\r\n UTF8\r\n AUTH TLS;TLS-C;SSL;TLS-P;\r\n PBSZ\r\n PROT C;P;\r\n CCC\r\n HOST\r\n SIZE\r\n MDTM\r\n REST STREAM\r\n211 END")
 
 	welcome: ->
 		@socket.write('220-Microsoft FTP Service')

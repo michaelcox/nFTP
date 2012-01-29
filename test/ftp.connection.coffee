@@ -41,4 +41,24 @@ describe 'ftp.connect', ->
 			ftp.os.should.equal "Windows_NT"
 			done()
 
+	it 'should get a list of features supported on the server', (done) ->
+		ftp = new Ftp({port: 20021, username: "jsmith", password: "mypass"})
+		ftp.connect (err) ->
+			should.not.exist(err)
+			("LANG EN*" in ftp.features).should.be.true
+			("UTF8" in ftp.features).should.be.true
+			("PBSZ" in ftp.features).should.be.true
+			done()
+
+	it 'should get a list of sub-features supported on the server', (done) ->
+		ftp = new Ftp({port: 20021, username: "jsmith", password: "mypass"})
+		ftp.connect (err) ->
+			should.not.exist(err)
+			("TLS" in ftp.features.auth).should.be.true
+			("TLS-C" in ftp.features.auth).should.be.true
+			("SSL" in ftp.features.auth).should.be.true
+			("C" in ftp.features.prot).should.be.true
+			("P" in ftp.features.prot).should.be.true
+			done()
+
 

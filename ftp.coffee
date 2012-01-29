@@ -2,6 +2,8 @@ net = require('net')
 
 module.exports = class Ftp
 
+	CRLF = "\r\n"
+
 	constructor: (params) ->
 		params ?= {}
 		@host = params.host or= 'localhost'
@@ -9,37 +11,62 @@ module.exports = class Ftp
 		@password = params.password or= 'anonymous'
 		@port = params.port or= 21
 		@authenticated = false
+		@features = []
 
 	connect: (callback) ->
+		# Step 1: Connect
 		@client = net.connect @port, @host
 
+		# Step 2: Send Username
+		@client.once 'user', =>
+			@raw("USER", @username)
+
+		# Step 3: Send Password
+		@client.once 'pass', =>
+			@raw("PASS", @password)
+		
+		# Step 4: Send SYST command to get Operating System of Server
 		@client.once 'authenticated', =>
 			@authenticated = true
 			@raw("SYST")
 
-		@client.once 'invalidLogin', ->
-			passToCallback(new Error("Invalid Login"))
+		# Step 5: Send FEAT command to get extended FTP features available on server
+		@client.once 'syst', (@os) =>
+			@raw("FEAT")
 
-		@client.once 'user', =>
-			@raw("USER", @username)
-
-		@client.once 'pass', =>
-			@raw("PASS", @password)
-
-		@client.once 'os', (@os) =>
+		# Step 6: Parse the feature list, which comes back in multiple connections
+		@client.on 'feat', (feat) =>
+			featLines = feat.split(CRLF)
+			for line in featLines
+				if line.substring(0, 1) is " "
+					if line.substring(1, 5) in ["AUTH", "PROT"]
+						subitems = line.substring(6).split(";")
+						name = line.substring(1, 5).toLowerCase()
+						@features[name] = []
+						for subitem in subitems
+							@features[name].push(subitem)
+					else
+						@features.push(line.substring(1))
 			passToCallback()
 
+		# Handle Invalid Login error
+		@client.once 'invalidLogin', ->
+			passToCallback(new Error("Invalid Login"))
+			
+		# Handle any other errors raised by the connection
 		@client.once 'error', (err) ->
 			passToCallback(err)
 
+		# Establish a function to handle any data that comes across the wire
 		@client.on 'data', (data) =>
 			@processResponse(data)
 
+		# Remove all the listeners that were created for the "connect" function
 		passToCallback = (err) =>
-			# Remove all the listeners that were created for the "connect" function
 			@client.removeAllListeners('user')
 			@client.removeAllListeners('pass')
-			@client.removeAllListeners('os')
+			@client.removeAllListeners('syst')
+			@client.removeAllListeners('feat')
 			@client.removeAllListeners('authenticated')
 			@client.removeAllListeners('invalidLogin')
 			@client.removeAllListeners('error')
@@ -59,7 +86,8 @@ module.exports = class Ftp
 	handleResponse: (respCode, text) ->
 		#console.log respCode
 		switch respCode
-			when 215 then @client.emit('os', text)
+			when 211 then @client.emit('feat', text)
+			when 215 then @client.emit('syst', text)
 			when 220 then @client.emit('user')
 			when 331 then @client.emit('pass')
 			when 230 then @client.emit('authenticated')
