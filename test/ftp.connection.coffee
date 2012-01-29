@@ -61,4 +61,11 @@ describe 'ftp.connect', ->
 			("P" in ftp.features.prot).should.be.true
 			done()
 
+	it 'should set the encoding to UTF8 if supported', (done) ->
+		ftp = new Ftp({port: 20021, username: "jsmith", password: "mypass"})
+		ftp.connect (err) ->
+			should.not.exist(err)
+			ftp.encoding.should.equal "utf8"
+			done()
+
 

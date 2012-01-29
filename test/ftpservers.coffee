@@ -23,6 +23,7 @@ exports.MicrosoftFtpServer = class FtpServer
 					when "PASS" then self.pass(args[0])
 					when "SYST" then self.syst()
 					when "FEAT" then self.feat()
+					when "OPTS" then self.opts(args)
 
 	close: ->
 		@server.close()
@@ -42,6 +43,10 @@ exports.MicrosoftFtpServer = class FtpServer
 
 	feat: ->
 		@socket.write("211-Extended features supported:\r\n LANG EN*\r\n UTF8\r\n AUTH TLS;TLS-C;SSL;TLS-P;\r\n PBSZ\r\n PROT C;P;\r\n CCC\r\n HOST\r\n SIZE\r\n MDTM\r\n REST STREAM\r\n211 END")
+
+	opts: (args) ->
+		if (args[0] is "UTF8" and args[1] is "ON")
+			@socket.write("200 OPTS UTF8 command successful - UTF8 encoding now ON.")
 
 	welcome: ->
 		@socket.write('220-Microsoft FTP Service')

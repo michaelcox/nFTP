@@ -12,29 +12,33 @@ module.exports = class Ftp
 		@port = params.port or= 21
 		@authenticated = false
 		@features = []
+		@encoding = 'ascii'
 
 	connect: (callback) ->
 		# Step 1: Connect
 		@client = net.connect @port, @host
 
-		# Step 2: Send Username
+		# Step 2: Set the initial encoding of the connection
+		@client.setEncoding(@encoding)
+
+		# Step 3: Send Username
 		@client.once 'user', =>
 			@raw("USER", @username)
 
-		# Step 3: Send Password
+		# Step 4: Send Password
 		@client.once 'pass', =>
 			@raw("PASS", @password)
 		
-		# Step 4: Send SYST command to get Operating System of Server
+		# Step 5: Send SYST command to get Operating System of Server
 		@client.once 'authenticated', =>
 			@authenticated = true
 			@raw("SYST")
 
-		# Step 5: Send FEAT command to get extended FTP features available on server
+		# Step 6: Send FEAT command to get extended FTP features available on server
 		@client.once 'syst', (@os) =>
 			@raw("FEAT")
 
-		# Step 6: Parse the feature list, which comes back in multiple connections
+		# Step 7: Parse the feature list, which comes back in multiple connections
 		@client.on 'feat', (feat) =>
 			featLines = feat.split(CRLF)
 			for line in featLines
@@ -47,6 +51,18 @@ module.exports = class Ftp
 							@features[name].push(subitem)
 					else
 						@features.push(line.substring(1))
+			setEncoding()
+
+		# Step 8: If supported, set the encoding to UTF-8
+		setEncoding = =>
+			if ("UTF8" in @features)
+				@raw("OPTS", "UTF8 ON")
+			else
+				passToCallback()
+
+		# Step 9: Call Callback if options were set
+		@client.once 'success', =>
+			@encoding = 'utf8'
 			passToCallback()
 
 		# Handle Invalid Login error
@@ -67,9 +83,12 @@ module.exports = class Ftp
 			@client.removeAllListeners('pass')
 			@client.removeAllListeners('syst')
 			@client.removeAllListeners('feat')
+			@client.removeAllListeners('success')
 			@client.removeAllListeners('authenticated')
 			@client.removeAllListeners('invalidLogin')
 			@client.removeAllListeners('error')
+
+			@client.setEncoding(@encoding)
 
 			callback(err)
 
@@ -86,6 +105,7 @@ module.exports = class Ftp
 	handleResponse: (respCode, text) ->
 		#console.log respCode
 		switch respCode
+			when 200 then @client.emit('success', text)
 			when 211 then @client.emit('feat', text)
 			when 215 then @client.emit('syst', text)
 			when 220 then @client.emit('user')
