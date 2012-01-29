@@ -35,12 +35,12 @@ module.exports = class Ftp
 			@raw("SYST")
 
 		# Step 6: Send FEAT command to get extended FTP features available on server
-		@client.once 'syst', (@os) =>
+		@client.once 'syst', (os) =>
+			@os = os[0]
 			@raw("FEAT")
 
 		# Step 7: Parse the feature list, which comes back in multiple connections
-		@client.on 'feat', (feat) =>
-			featLines = feat.split(CRLF)
+		@client.on 'feat', (featLines) =>
 			for line in featLines
 				if line.substring(0, 1) is " "
 					if line.substring(1, 5) in ["AUTH", "PROT"]
@@ -92,21 +92,22 @@ module.exports = class Ftp
 
 			callback(err)
 
-	raw: (command, arg1, arg2, arg3) ->
-		args = [arg1, arg2, arg3].join(" ")
+	raw: (command, args...) ->
+		args = args.join(" ")
 		@lastCmd = command
 		@client.write(command + " " + args)
 
 	processResponse: (data) ->
 		respCode = parseInt(data.toString().substring(0, 3))
-		text = data.toString().substring(4)
-		@handleResponse(respCode, text)
+		text = data.toString().substring(4).split(CRLF)
+		multiLine = (text.length > 1)
+		@handleResponse(respCode, text, multiLine)
 
-	handleResponse: (respCode, text) ->
+	handleResponse: (respCode, text, multiLine) ->
 		#console.log respCode
 		switch respCode
-			when 200 then @client.emit('success', text)
-			when 211 then @client.emit('feat', text)
+			when 200 then @client.emit('success', text, multiLine)
+			when 211 then @client.emit('feat', text, multiLine)
 			when 215 then @client.emit('syst', text)
 			when 220 then @client.emit('user')
 			when 331 then @client.emit('pass')

@@ -1,3 +1,4 @@
 --require should
---slow 20
+--slow 100
 --growl
+--timeout 1000
