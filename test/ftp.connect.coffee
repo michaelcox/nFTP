@@ -4,13 +4,15 @@ should = require('should')
 net = require('net')
 ftpServer = {}
 
+
 describe 'ftp.connect', ->
 
-	before =>
+	beforeEach ->
 		ftpServer = new ftpservers.MicrosoftFtpServer()
 		ftpServer.open()
-	after =>
+	afterEach ->
 		ftpServer.close()
+		ftpServer = undefined
 
 	it 'should automatically authenticate upon successful connection', (done) ->
 		ftp = new Ftp({port: 20021, username: "jsmith", password: "mypass"})
@@ -59,6 +61,24 @@ describe 'ftp.connect', ->
 			("SSL" in ftp.features.auth).should.be.true
 			("C" in ftp.features.prot).should.be.true
 			("P" in ftp.features.prot).should.be.true
+			done()
+
+	it 'should be able to process data even with a lag coming across the network', (done) ->
+
+		# Override the "FEAT" return to add a one-second delay across two socket writes
+		ftpServer.feat = ->
+			ftpServer.socket.write("211-Extended features supported:\r\n LANG EN*\r\n UTF8\r\n AUTH TLS;TLS-C;SSL;TLS-P;\r\n")
+			setTimeout ->
+				ftpServer.socket.write(" PBSZ\r\n PROT C;P;\r\n CCC\r\n HOST\r\n SIZE\r\n MDTM\r\n REST STREAM\r\n211 END\r\n")
+			, 500
+			 
+
+		ftp = new Ftp({port: 20021, username: "jsmith", password: "mypass"})
+		ftp.connect (err) ->
+			should.not.exist(err)
+			("LANG EN*" in ftp.features).should.be.true
+			("UTF8" in ftp.features).should.be.true
+			("PBSZ" in ftp.features).should.be.true
 			done()
 
 	it 'should set the encoding to UTF8 if supported', (done) ->

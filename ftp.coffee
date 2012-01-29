@@ -2,7 +2,8 @@ net = require('net')
 
 module.exports = class Ftp
 
-	CRLF = "\r\n"
+	LineFeed = "\n"
+	CarriageReturn = "\r"
 
 	constructor: (params) ->
 		params ?= {}
@@ -13,6 +14,7 @@ module.exports = class Ftp
 		@authenticated = false
 		@features = []
 		@encoding = 'ascii'
+		@existingLines = []
 
 	connect: (callback) ->
 		# Step 1: Connect
@@ -36,7 +38,7 @@ module.exports = class Ftp
 
 		# Step 6: Got SYST, Send FEAT command to get extended FTP features available on server
 		@client.once 215, (os) =>
-			@os = os[0]
+			@os = os[0].substr(4)
 			@raw("FEAT")
 
 		# Step 7: Parse the feature list, which comes back in multiple connections
@@ -75,6 +77,7 @@ module.exports = class Ftp
 
 		# Establish a function to handle any data that comes across the wire
 		@client.on 'data', (data) =>
+			#console.log "<" + data.toString() + ">"
 			@processResponse(data)
 
 		passToCallback = (err) =>
@@ -98,10 +101,30 @@ module.exports = class Ftp
 	raw: (command, args...) ->
 		args = args.join(" ")
 		@lastCmd = command
-		@client.write(command + " " + args)
+		#console.log command + " " + args.trim() + ":"
+		@client.write(command + " " + args.trim() + CarriageReturn + LineFeed, @encoding)
 
 	processResponse: (data) ->
-		respCode = parseInt(data.toString().substring(0, 3))
-		text = data.toString().substring(4).split(CRLF)
-		multiLine = (text.length > 1)
-		@client.emit(respCode, text, multiLine)
+		done = false # Whether we can emit the data
+
+		# Split the current data on line breaks
+		lines = data.toString().split(LineFeed)
+
+		# Remove blank lines, and push to the existing array
+		for line in lines
+			line = line.replace(CarriageReturn, "")
+			@existingLines.push(line) if line != ""
+
+		# Check to see if we've received the last line of this transmission
+		if @existingLines.length > 1 and @existingLines[0].substr(0, 3) == @existingLines[@existingLines.length - 1].substr(0, 3)
+			done = true
+		
+		# Or if this is the one and only line coming
+		if @existingLines.length == 1 and @existingLines[0].substr(3, 1) != "-"
+			done = true
+
+		if done
+			multiLine = (@existingLines.length > 1)
+			respCode = parseInt(@existingLines[0].substr(0, 3))
+			@client.emit(respCode, @existingLines, multiLine)
+			@existingLines = []

@@ -14,7 +14,7 @@ exports.MicrosoftFtpServer = class FtpServer
 			self.socket = socket
 			self.welcome()
 			socket.on 'data', (data) ->
-				dataSent = data.toString()
+				dataSent = data.toString().replace("\r\n", "")
 				#console.log dataSent
 				[cmd, args...] = dataSent.split(" ")
 
@@ -30,25 +30,30 @@ exports.MicrosoftFtpServer = class FtpServer
 		@server.close()
 
 	user: (@username) =>
-		@socket.write("331 Password required for #{username}.\r\n")
+		@write("331 Password required for #{username}.\r\n")
 
 	pass: (@password) =>
 		if @username is 'jsmith' and @password is 'mypass'
-			@socket.write("230-Welcome\r\n")
-			@socket.write("230 User logged in.\r\n")
+			@write("230-Welcome\r\n230 User logged in.\r\n")
 		else
-			@socket.write("530 Login incorrect.\r\n")
+			@write("530 Login incorrect.\r\n")
 
 	syst: ->
-		@socket.write("215 Windows_NT\r\n")
+		@write("215 Windows_NT\r\n")
 
 	feat: ->
-		@socket.write("211-Extended features supported:\r\n LANG EN*\r\n UTF8\r\n AUTH TLS;TLS-C;SSL;TLS-P;\r\n PBSZ\r\n PROT C;P;\r\n CCC\r\n HOST\r\n SIZE\r\n MDTM\r\n REST STREAM\r\n211 END\r\n")
+		@write("211-Extended features supported:\r\n LANG EN*\r\n UTF8\r\n AUTH TLS;TLS-C;SSL;TLS-P;\r\n PBSZ\r\n PROT C;P;\r\n CCC\r\n HOST\r\n SIZE\r\n MDTM\r\n REST STREAM\r\n211 END\r\n")
 
 	opts: (args) ->
 		if (args[0] is "UTF8" and args[1] is "ON")
-			@socket.write("200 OPTS UTF8 command successful - UTF8 encoding now ON.\r\n")
+			@write("200 OPTS UTF8 command successful - UTF8 encoding now ON.\r\n")
+
+	quit: ->
+		@socket.end()
 
 	welcome: ->
-		@socket.write('220-Microsoft FTP Service\r\n')
-		@socket.write('220 Example.com FTP\r\n')
+		@write('220-Microsoft FTP Service\r\n220 Example.com FTP\r\n')
+
+	write: (text) ->
+		#console.log "<" + text + ">"
+		@socket.write(text)
