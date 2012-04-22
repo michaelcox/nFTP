@@ -2,3 +2,4 @@
 --slow 100
 --growl
 --timeout 1000
+--compilers coffee:coffee-script

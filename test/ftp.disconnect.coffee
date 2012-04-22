@@ -1,4 +1,4 @@
-Ftp = require('../ftp')
+Ftp = require('../index')
 ftpservers = require('./ftpservers')
 should = require('should')
 net = require('net')

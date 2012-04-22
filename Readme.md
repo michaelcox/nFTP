@@ -7,7 +7,9 @@ An FTP client, written in [CoffeeScript](http://coffeescript.org/) for use with 
 ## Usage
 Functionality is currently in-progress.  To see a list of supported functionality, review the tests in the **test** folder.
 
-     var ftp = new Ftp();
+	Ftp = require('nftp');
+
+	var ftp = new Ftp();
 
      ftp.connect(function(err) {
           // Do stuff
@@ -16,13 +18,11 @@ Functionality is currently in-progress.  To see a list of supported functionalit
           });
      });
 
-
 ## Tests
 Testing is done against a fake FTP server, also written in node.  Functionality of that server can be overwritten to satisfy edge cases.  The testing framework is [Mocha](http://visionmedia.github.com/mocha/) and [should.js](https://github.com/visionmedia/should.js).
 
 To run the tests, first install test dependencies:
 
-     cd test/
      npm install -d
 
 Then you may run the tests with the included Makefile from the root of the project:

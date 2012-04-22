@@ -1,4 +1,4 @@
-Ftp = require('../ftp')
+Ftp = require('../index')
 
 describe 'ftp constructor', ->
 	it 'should accept connection params', ->
