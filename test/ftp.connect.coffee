@@ -70,7 +70,7 @@ describe 'ftp.connect', ->
 			ftpServer.socket.write("211-Extended features supported:\r\n LANG EN*\r\n UTF8\r\n AUTH TLS;TLS-C;SSL;TLS-P;\r\n")
 			setTimeout ->
 				ftpServer.socket.write(" PBSZ\r\n PROT C;P;\r\n CCC\r\n HOST\r\n SIZE\r\n MDTM\r\n REST STREAM\r\n211 END\r\n")
-			, 500
+			, 200
 			 
 
 		ftp = new Ftp({port: 20021, username: "jsmith", password: "mypass"})

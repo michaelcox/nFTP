@@ -4,7 +4,11 @@ REPORTER = spec
 
 test:
 	@NODE_ENV=test ./node_modules/.bin/mocha \
-		--reporter $(REPORTER) \
+		--reporter $(REPORTER)
 
+test-watch:
+	@NODE_ENV=test ./node_modules/.bin/mocha \
+		--reporter $(REPORTER) \
+		--watch
 
 .PHONY: test

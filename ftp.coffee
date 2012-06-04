@@ -77,7 +77,6 @@ module.exports = class Ftp
 
 		# Establish a function to handle any data that comes across the wire
 		@client.on 'data', (data) =>
-			#console.log "<" + data.toString() + ">"
 			@processResponse(data)
 
 		passToCallback = (err) =>
@@ -98,10 +97,12 @@ module.exports = class Ftp
 		@client.end()
 		callback()
 
+	list: (callback) ->
+		callback()
+
 	raw: (command, args...) ->
 		args = args.join(" ")
 		@lastCmd = command
-		#console.log command + " " + args.trim() + ":"
 		@client.write(command + " " + args.trim() + CarriageReturn + LineFeed, @encoding)
 
 	processResponse: (data) ->
