@@ -2,7 +2,8 @@
 # nFTP
       
 An FTP client, written in [CoffeeScript](http://coffeescript.org/) for use with node.js.
-  
+
+[![Build Status](https://secure.travis-ci.org/michaelcox/nFTP.png?branch=master)](http://travis-ci.org/michaelcox/nFTP)
 
 ## Usage
 Functionality is currently in-progress.  To see a list of supported functionality, review the tests in the **test** folder.
